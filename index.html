@@ -866,7 +866,7 @@
     <div class="form-grid-2" style="margin-bottom:12px">
       <div class="form-group">
         <label class="form-label">Type de prise en charge</label>
-        <select id="f-type" class="form-select">
+        <select id="f-type" class="form-select" onchange="toggleLieu()">
           <option value="code6">Code 6 — Hôpital / Bloc opératoire</option>
           <option value="code3">Code 3 — Ambulance / Patrouille terrain</option>
         </select>
@@ -881,29 +881,13 @@
         <label class="form-label">Nom du patient</label>
         <input id="f-patient" type="text" class="form-input" placeholder="ex : Rafa Santos">
       </div>
-      <div class="form-group">
+      <div class="form-group" id="group-lieu">
         <label class="form-label">Lieu d'intervention</label>
         <input id="f-lieu" type="text" class="form-input" placeholder="ex : Elgin Avenue">
       </div>
-      <div class="form-group">
-        <label class="form-label">Chirurgien responsable (si bloc)</label>
-        <input id="f-chirurgien" type="text" class="form-input" placeholder="ex : Dr. James DAHON">
-      </div>
+
     </div>
-    <div class="form-grid-3" style="margin-bottom:12px">
-      <div class="form-group">
-        <label class="form-label">Pression artérielle (mmHg)</label>
-        <input id="f-pa" type="text" class="form-input" placeholder="ex : 110/70">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Fréquence cardiaque (bpm)</label>
-        <input id="f-fc" type="text" class="form-input" placeholder="ex : 88">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Saturation O₂ (%)</label>
-        <input id="f-spo2" type="text" class="form-input" placeholder="ex : 97">
-      </div>
-    </div>
+
     <div class="form-group">
       <label class="form-label">État initial &amp; blessures constatées</label>
       <textarea id="f-blessures" class="form-textarea" rows="3" placeholder="Décris les blessures, le mécanisme, l'état du patient à l'arrivée, la scène..."></textarea>
@@ -980,9 +964,15 @@ function saveKey() {
 function modalSave() {}
 function modalSkip() { document.getElementById('modal-overlay').style.display = 'none'; }
 function loadKey() {}
+function toggleLieu() {
+  var type = document.getElementById('f-type').value;
+  var grp = document.getElementById('group-lieu');
+  if (grp) grp.style.display = type === 'code3' ? '' : 'none';
+}
 window.addEventListener('DOMContentLoaded', function() {
   var overlay = document.getElementById('modal-overlay');
   if (overlay) overlay.style.display = 'none';
+  toggleLieu();
 });
 
 function go(tab, el) {
@@ -1002,7 +992,6 @@ function toggle(head) {
 var PRESETS = {
   paf: {
     type: 'code6',
-    pa: '110/70', fc: '88', spo2: '97',
     blessures: 'Patient retrouvé inconscient à l\'accueil de l\'établissement. Arrêt respiratoire constaté à l\'arrivée. Traumatismes : plaies par arme à feu au niveau de la cuisse droite et de la main droite. Deux impacts de balles, projectiles logés dans les tissus mous sans atteinte osseuse ou vasculaire majeure.',
     actes: 'Réanimation cardio-pulmonaire réussie. Extraction chirurgicale des deux projectiles (cuisse et main droites). Parage et désinfection des orifices. Sutures musculaires et cutanées. Pansements compressifs stériles. Prescription antibiotiques et antalgiques.',
     factures: 'Réanimation $400, Intervention chirurgicale PAF $2000, Prescription médicament $100 — Total : $2500',
@@ -1010,7 +999,6 @@ var PRESETS = {
   },
   pab: {
     type: 'code6',
-    pa: '94/60', fc: '108', spo2: '93',
     blessures: 'Patient admis sur décision d\'un équipage médical suite à une agression par arme blanche avec atteinte abdominale. Plaie pénétrante abdominale avec saignement actif. Défense abdominale localisée, douleur sévère à la palpation. Signes de début de choc hémorragique.',
     actes: 'Stabilisation hémodynamique préalable. Exploration chirurgicale : plaie pénétrante limitée à la paroi abdominale, absence d\'atteinte viscérale. Débridement limité. Lavage abondant. Fermeture plan musculaire et cutané. Pansement compressif stérile. Prescription antalgiques. Béquilles.',
     factures: 'Réanimation $400, Chirurgie PAB sévère $1750, Prescription médicament $100, Béquilles $300 — Total : $2550',
@@ -1018,7 +1006,6 @@ var PRESETS = {
   },
   acr: {
     type: 'code3',
-    pa: '80/50', fc: '0', spo2: '88',
     blessures: 'Arrêt cardio-respiratoire constaté à l\'arrivée de l\'équipage. Patient inconscient, en apnée, absence de pouls carotidien. Situation retrouvée sur la voie publique.',
     actes: 'RCP immédiate 30:2. Défibrillation après identification fibrillation ventriculaire. Retour à une activité circulatoire spontanée après 3 cycles. Monitoring continu. Stabilisation et évacuation médicalisée urgente vers PillBox Hill Medical Center.',
     factures: 'Réanimation $400',
@@ -1026,7 +1013,6 @@ var PRESETS = {
   },
   trauma: {
     type: 'code3',
-    pa: '105/65', fc: '112', spo2: '95',
     blessures: 'Traumatisme multiple suite à un accident de la voie publique (AVP). Fracture probable du membre inférieur gauche. Douleur thoracique. Lacérations multiples. Patient conscient mais confus.',
     actes: 'Immobilisation du membre inférieur. Pansements compressifs sur lacérations. Monitoring continu. Évacuation vers PillBox Hill Medical Center.',
     factures: 'Soins de base $200, Prescription antalgiques $100 — Total : $300',
@@ -1034,7 +1020,6 @@ var PRESETS = {
   },
   bobologie: {
     type: 'code6',
-    pa: '120/80', fc: '72', spo2: '99',
     blessures: 'Patient se présentant aux urgences pour une plaie superficielle au niveau du bras gauche. Mécanisme : chute accidentelle. Aucun signe de détresse vitale.',
     actes: 'Nettoyage et désinfection de la plaie. Suture par points séparés. Pansement stérile. Prescription antalgiques légers.',
     factures: 'Soins de base $200, Prescription médicament $100 — Total : $300',
@@ -1045,13 +1030,11 @@ var PRESETS = {
 function preset(key) {
   var p = PRESETS[key];
   document.getElementById('f-type').value = p.type;
-  document.getElementById('f-pa').value = p.pa;
-  document.getElementById('f-fc').value = p.fc;
-  document.getElementById('f-spo2').value = p.spo2;
   document.getElementById('f-blessures').value = p.blessures;
   document.getElementById('f-actes').value = p.actes;
   document.getElementById('f-factures').value = p.factures;
   document.getElementById('f-ata').value = p.ata;
+  toggleLieu();
 }
 
 async function genRapport() {
@@ -1063,10 +1046,7 @@ async function genRapport() {
   var redacteur = document.getElementById('f-redacteur').value || 'Agent SAMC';
   var patient = document.getElementById('f-patient').value || 'Patient Inconnu';
   var lieu = document.getElementById('f-lieu').value || 'San Andreas';
-  var chirurgien = document.getElementById('f-chirurgien').value || '';
-  var pa = document.getElementById('f-pa').value || 'non renseignée';
-  var fc = document.getElementById('f-fc').value || 'non renseignée';
-  var spo2 = document.getElementById('f-spo2').value || 'non renseignée';
+  var chirurgien = redacteur;
   var blessures = document.getElementById('f-blessures').value || '';
   var actes = document.getElementById('f-actes').value || '';
   var factures = document.getElementById('f-factures').value || '';
@@ -1104,17 +1084,14 @@ Style : formel, médical, détaillé mais sans superflu. Ne jamais inventer d'é
 
 Type : ${typeLabel}
 Date : ${date} à ${heure}
-Lieu : ${lieu}
+${type === 'code3' ? 'Lieu : ' + lieu : 'Lieu : PillBox Hill Medical Center (hôpital)'}
 Rédacteur : ${redacteur}
 Patient : ${patient}
-${chirurgien ? 'Chirurgien : Dr. ' + chirurgien : ''}
-
-Constantes observées :
-- PA : ${pa} mmHg
-- FC : ${fc} bpm
-- SpO₂ : ${spo2} %
+Praticien référent : ${redacteur}
 
 État clinique et blessures : ${blessures}
+
+Génère des constantes vitales réalistes et cohérentes avec les blessures décrites (PA, FC, SpO2 avant et après stabilisation si applicable).
 
 Actes réalisés : ${actes}
 
