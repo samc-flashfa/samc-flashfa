@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMC Assistant — FlashFA</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --red:#C0392B;--red2:#E74C3C;--red-light:#fdf0f0;--red-dark:#7B241C;
+    --teal:#16A085;--teal-light:#e8f8f5;--teal-dark:#0E6655;
+    --amber:#D4AC0D;--amber-light:#fef9e7;--amber-dark:#7D6608;
+    --blue:#2471A3;--blue-light:#EAF2FB;--blue-dark:#1A5276;
+    --green:#1E8449;--green-light:#eafbea;--green-dark:#145A32;
+    --purple:#7D3C98;--purple-light:#F5EEF8;--purple-dark:#4A235A;
+    --navy:#1a2a3a;--navy2:#243447;--navy3:#2d3f52;
+    --bg:#f4f6f9;--card:#fff;--border:#e0e5ec;
+    --txt:#1a2a3a;--txt2:#4a5568;--txt3:#718096;
+    --font:'Segoe UI',system-ui,sans-serif;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh}
+
+  /* NAV */
+  .navbar{background:var(--navy);border-bottom:3px solid var(--red);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+  .nav-inner{max-width:1400px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:0}
+  .nav-brand{display:flex;align-items:center;gap:12px;padding:14px 0;margin-right:2rem;text-decoration:none}
+  .nav-logo{width:38px;height:38px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;font-weight:700;flex-shrink:0}
+  .nav-brand-text{color:#fff;font-size:16px;font-weight:700;letter-spacing:0.5px}
+  .nav-brand-sub{color:rgba(255,255,255,0.55);font-size:11px;margin-top:2px}
+  .nav-tabs{display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{padding:16px 18px;font-size:13px;color:rgba(255,255,255,0.6);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-3px;white-space:nowrap;transition:color .15s,border-color .15s;font-family:var(--font)}
+  .nav-tab:hover{color:rgba(255,255,255,0.9)}
+  .nav-tab.active{color:#fff;border-bottom-color:var(--red);font-weight:600}
+
+  /* STATUS BAR */
+  .status-bar{background:var(--navy2);border-bottom:1px solid rgba(255,255,255,0.06);padding:7px 1.5rem;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,0.5)}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:#2ecc71;animation:pulse 2s infinite;flex-shrink:0}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+  .status-sep{color:rgba(255,255,255,0.2)}
+
+  /* LAYOUT */
+  .main{max-width:1400px;margin:0 auto;padding:1.5rem}
+  .section{display:none}
+  .section.active{display:block}
+
+  /* HEADINGS */
+  .page-title{font-size:22px;font-weight:700;color:var(--txt);margin-bottom:4px}
+  .page-sub{font-size:14px;color:var(--txt3);margin-bottom:1.5rem}
+  .section-title{font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.08em;margin:1.5rem 0 10px}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+  .card+.card{margin-top:10px}
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:1rem}
+  .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:1rem}
+
+  /* TAGS */
+  .tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:0.03em}
+  .tag-red{background:var(--red-light);color:var(--red-dark)}
+  .tag-green{background:var(--green-light);color:var(--green-dark)}
+  .tag-amber{background:var(--amber-light);color:var(--amber-dark)}
+  .tag-blue{background:var(--blue-light);color:var(--blue-dark)}
+  .tag-teal{background:var(--teal-light);color:var(--teal-dark)}
+  .tag-purple{background:var(--purple-light);color:var(--purple-dark)}
+  .tag-navy{background:rgba(26,42,58,0.1);color:var(--navy)}
+
+  /* TABLES */
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{text-align:left;padding:9px 12px;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid var(--border);background:var(--bg)}
+  .tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--txt);line-height:1.5}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr:hover td{background:rgba(0,0,0,0.018)}
+
+  /* STEPS */
+  .steps{display:flex;flex-direction:column;gap:0}
+  .step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+  .step:last-child{border-bottom:none;padding-bottom:0}
+  .step-n{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+  .step-content{}
+  .step-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:3px}
+  .step-desc{font-size:13px;color:var(--txt2);line-height:1.6}
+
+  /* LETTER STEPS (ABCDE) */
+  .step-n.letter{font-size:13px;font-weight:800}
+
+  /* VITALS GRID */
+  .vitals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem}
+  .vital{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+  .vital-label{font-size:11px;color:var(--txt3);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+  .vital-val{font-size:16px;font-weight:700;color:var(--txt)}
+  .vital-note{font-size:11px;color:var(--txt3);margin-top:4px}
+  .vital.danger .vital-val{color:var(--red)}
+  .vital.warning .vital-val{color:var(--amber)}
+
+  /* ALERT BOXES */
+  .alert{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+  .alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+  .alert-red{background:var(--red-light);color:var(--red-dark);border-left:3px solid var(--red)}
+  .alert-amber{background:var(--amber-light);color:var(--amber-dark);border-left:3px solid var(--amber)}
+  .alert-green{background:var(--green-light);color:var(--green-dark);border-left:3px solid var(--green)}
+  .alert-blue{background:var(--blue-light);color:var(--blue-dark);border-left:3px solid var(--blue)}
+  .alert-teal{background:var(--teal-light);color:var(--teal-dark);border-left:3px solid var(--teal)}
+
+  /* ACCORDION */
+  .accordion{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}
+  .acc-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--card);user-select:none;gap:12px}
+  .acc-head:hover{background:var(--bg)}
+  .acc-head-left{display:flex;align-items:center;gap:10px}
+  .acc-title{font-size:14px;font-weight:600;color:var(--txt)}
+  .acc-chevron{color:var(--txt3);font-size:12px;transition:transform .2s;flex-shrink:0}
+  .acc-chevron.open{transform:rotate(180deg)}
+  .acc-body{padding:0 16px 16px;display:none;border-top:1px solid var(--border)}
+  .acc-body.open{display:block}
+
+  /* GRADE TABLE */
+  .grade-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .grade-row:last-child{border-bottom:none}
+  .grade-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .grade-info{}
+  .grade-name{font-size:14px;font-weight:600;color:var(--txt)}
+  .grade-desc{font-size:12px;color:var(--txt3)}
+
+  /* RADIO CODES */
+  .code-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+  .code-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;align-items:flex-start;gap:10px}
+  .code-num{font-size:15px;font-weight:800;color:var(--navy);min-width:56px;flex-shrink:0;font-family:'Courier New',monospace}
+  .code-def{font-size:13px;color:var(--txt2);line-height:1.4}
+  .code-item.critical{border-left:3px solid var(--red);background:var(--red-light)}
+  .code-item.critical .code-num{color:var(--red)}
+  .code-item.active-status{border-left:3px solid var(--green)}
+
+  /* VEHICLE CARDS */
+  .vehicle-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
+  .vehicle-name{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:4px}
+  .vehicle-cap{font-size:12px;color:var(--txt3);margin-bottom:6px}
+  .vehicle-desc{font-size:12px;color:var(--txt2);line-height:1.5}
+
+  /* REPORT FORM */
+  .form-group{margin-bottom:12px}
+  .form-label{display:block;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+  .form-input,.form-select,.form-textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:var(--font);transition:border-color .15s}
+  .form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--blue)}
+  .form-textarea{resize:vertical}
+  .form-grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .form-grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+
+  .preset-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:16px}
+  .preset-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--txt);cursor:pointer;text-align:left;transition:background .1s,border-color .1s;font-family:var(--font)}
+  .preset-btn:hover{background:#e8edf3;border-color:#c5d0de}
+  .preset-label{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:3px}
+
+  .btn-gen{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .15s;margin-top:8px}
+  .btn-gen:hover{background:var(--red-dark)}
+  .btn-gen:disabled{background:#ccc;cursor:not-allowed}
+
+  .output-area{background:#f8f9fb;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:var(--txt);white-space:pre-wrap;font-family:'Courier New',monospace;margin-top:12px;display:none;min-height:80px}
+  .output-area.show{display:block}
+
+  .btn-copy{display:none;margin-top:8px;background:none;border:1px solid var(--border);border-radius:7px;padding:7px 16px;font-size:13px;color:var(--txt2);cursor:pointer;font-family:var(--font);transition:background .1s}
+  .btn-copy:hover{background:var(--bg)}
+  .btn-copy.show{display:inline-block}
+
+  /* PHARMACOLOGIE */
+  .pharma-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+  .pharma-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+  .pharma-name{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px}
+  .pharma-role{font-size:12px;color:var(--txt2);line-height:1.5}
+  .pharma-warn{font-size:11px;color:var(--red-dark);margin-top:4px}
+
+  /* RESPONSIVE */
+  @media(max-width:640px){
+    .nav-inner{padding:0 1rem}
+    .main{padding:1rem}
+    .nav-brand{margin-right:1rem}
+    .nav-tab{padding:14px 12px;font-size:12px}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .form-grid-3{grid-template-columns:1fr 1fr}
+    .code-grid{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:400px){
+    .code-grid{grid-template-columns:1fr}
+    .form-grid-3{grid-template-columns:1fr}
+  }
+
+  /* FOOTER */
+  .footer{text-align:center;padding:2rem 1rem;color:var(--txt3);font-size:12px;border-top:1px solid var(--border);margin-top:2rem}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .modal-box{background:#fff;border-radius:16px;padding:2rem;max-width:480px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.25)}
+  .modal-logo{width:48px;height:48px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;margin:0 auto 1rem}
+  .modal-title{font-size:18px;font-weight:700;color:var(--txt);text-align:center;margin-bottom:6px}
+  .modal-sub{font-size:13px;color:var(--txt3);text-align:center;margin-bottom:1.5rem;line-height:1.6}
+  .modal-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;color:var(--txt2);line-height:1.5}
+  .modal-step-n{width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+  .modal-input{width:100%;border:2px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:monospace;color:var(--txt);margin:1rem 0 6px;transition:border-color .15s}
+  .modal-input:focus{outline:none;border-color:var(--red)}
+  .modal-err{font-size:12px;color:var(--red);min-height:18px;margin-bottom:8px}
+  .modal-btn{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font)}
+  .modal-btn:hover{background:var(--red-dark)}
+  .modal-skip{display:block;text-align:center;font-size:12px;color:var(--txt3);margin-top:10px;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+
+
+<div id="modal-overlay" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-logo">✚</div>
+    <div class="modal-title">Assistant SAMC — FlashFA</div>
+    <div class="modal-sub">Pour générer des rapports médicaux avec l'IA,<br>il te faut une clé API Google gratuite.</div>
+    <div class="modal-step"><div class="modal-step-n">1</div><div>Va sur <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue);font-weight:600">aistudio.google.com/app/apikey</a> et connecte-toi avec ton compte Google</div></div>
+    <div class="modal-step"><div class="modal-step-n">2</div><div>Clique sur <strong>"Create API key"</strong> puis copie la clé générée</div></div>
+    <div class="modal-step"><div class="modal-step-n">3</div><div>Colle-la ici — elle sera sauvegardée dans ton navigateur, tu n'auras plus jamais à la remettre</div></div>
+    <input id="modal-key-input" class="modal-input" type="password" placeholder="AIzaSy...">
+    <div id="modal-err" class="modal-err"></div>
+    <button class="modal-btn" onclick="modalSave()">Enregistrer et continuer</button>
+    <span class="modal-skip" onclick="modalSkip()">Ignorer — utiliser le site sans l'IA</span>
+  </div>
+</div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#">
+      <div class="nav-logo">✚</div>
+      <div>
+        <div class="nav-brand-text">SAMC Assistant</div>
+        <div class="nav-brand-sub">FlashFA — Serveur officiel</div>
+      </div>
+    </a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="go('accueil',this)">Accueil</button>
+      <button class="nav-tab" onclick="go('protocoles',this)">Protocoles</button>
+      <button class="nav-tab" onclick="go('blessures',this)">Blessures &amp; ATA</button>
+      <button class="nav-tab" onclick="go('chirurgie',this)">Chirurgie &amp; Bloc</button>
+      <button class="nav-tab" onclick="go('radio',this)">Codes radio</button>
+      <button class="nav-tab" onclick="go('vehicules',this)">Véhicules</button>
+      <button class="nav-tab" onclick="go('grades',this)">Grades &amp; Dispatch</button>
+      <button class="nav-tab" onclick="go('pharma',this)">Pharmacologie</button>
+      <button class="nav-tab" onclick="go('rapports',this)">Rédaction IA</button>
+    </div>
+  </div>
+</nav>
+
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span>Assistant SAMC en ligne</span>
+  <span class="status-sep">·</span>
+  <span>FlashFA — San Andreas Medical Company</span>
+  <span class="status-sep">·</span>
+  <span>Devise : Servir avec courage, intégrité et fierté</span>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════ ACCUEIL ═══════════════════════════════════ -->
+<div id="tab-accueil" class="section active">
+  <div class="page-title">Tableau de bord SAMC</div>
+  <div class="page-sub">Bienvenue sur l'assistant officieux terrain de la San Andreas Medical Company — FlashFA</div>
+
+  <div class="grid-3">
+    <div class="card" style="border-top:3px solid var(--red)">
+      <div style="font-size:22px;margin-bottom:8px">🚑</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Protocoles terrain</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">ABCDE, RCP, choc hémorragique, incendie, brûlures. Tout ce qu'il faut sur le terrain.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <div style="font-size:22px;margin-bottom:8px">🏥</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Chirurgie &amp; Bloc</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Procédures opératoires, règles de stérilité, anesthésie, sutures, actes autorisés par grade.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div style="font-size:22px;margin-bottom:8px">📝</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Rédaction IA</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Génère tes rapports médicaux en secondes. Code 3 terrain ou Code 6 hôpital. Presets PAF, PAB, ACR.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--amber)">
+      <div style="font-size:22px;margin-bottom:8px">📻</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Codes radio complets</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Tous les codes 10-X issus de la formation officielle, codes de statut et phraséologie opérationnelle.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <div style="font-size:22px;margin-bottom:8px">🚗</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Flotte SAMC</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Ambu3, Ambu2, Karakara, Maverick, Swift, Valkirie… capacités et usages de chaque véhicule.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green)">
+      <div style="font-size:22px;margin-bottom:8px">💊</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Pharmacologie</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Anesthésiques, antalgiques, antibiotiques, transfusion. Tout le tableau médicaments SAMC.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Constantes vitales de référence</div>
+  <div class="vitals-grid">
+    <div class="vital"><div class="vital-label">Pression artérielle</div><div class="vital-val">120/80</div><div class="vital-note">mmHg — Choc si &lt;90/60</div></div>
+    <div class="vital"><div class="vital-label">Fréquence cardiaque</div><div class="vital-val">60–100</div><div class="vital-note">bpm — Tachy si &gt;100</div></div>
+    <div class="vital"><div class="vital-label">Saturation O₂</div><div class="vital-val">98–100</div><div class="vital-note">% — Critique si &lt;90%</div></div>
+    <div class="vital"><div class="vital-label">Fréq. respiratoire</div><div class="vital-val">12–20</div><div class="vital-note">/min adulte</div></div>
+    <div class="vital"><div class="vital-label">Température</div><div class="vital-val">36,5–37,5</div><div class="vital-note">°C — Fièvre si &gt;38,5°C</div></div>
+    <div class="vital"><div class="vital-label">Score Glasgow (GCS)</div><div class="vital-val">15/15</div><div class="vital-note">Coma si ≤ 8</div></div>
+  </div>
+
+  <div class="section-title">Tarifs SAMC — FlashFA</div>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>Acte médical</th><th style="text-align:right">Tarif</th></tr>
+      <tr><td>Réanimation (RCP)</td><td style="text-align:right;font-weight:700;color:var(--red)">$ 400</td></tr>
+      <tr><td>Chirurgie — blessure(s) par arme à feu (PAF)</td><td style="text-align:right;font-weight:700;color:var(--red)">$ 2 000</td></tr>
+      <tr><td>Chirurgie — blessure(s) par arme blanche sévère (PAB)</td><td style="text-align:right;font-weight:700;color:var(--red)">$ 1 750</td></tr>
+      <tr><td>Chirurgie — blessure(s) par arme blanche légère</td><td style="text-align:right;font-weight:700">$ 1 000</td></tr>
+      <tr><td>Soins de base (sutures légères, pansements)</td><td style="text-align:right;font-weight:700">$ 200</td></tr>
+      <tr><td>Prescription médicament (antibiotiques, antalgiques…)</td><td style="text-align:right;font-weight:700">$ 100</td></tr>
+      <tr><td>Béquilles</td><td style="text-align:right;font-weight:700">$ 300</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">Règles fondamentales SAMC</div>
+  <div class="grid-2">
+    <div>
+      <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Il est <strong>interdit</strong> de transporter un patient dans un véhicule non adapté (hors ambulance/karakara).</div></div>
+      <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Il est <strong>interdit</strong> de vendre/donner du matériel médical à un civil sans prescription. Sanction : BAN.</div></div>
+      <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Il est <strong>interdit</strong> de porter du matériel EMS hors service ou dans une instance.</div></div>
+      <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Un EMS ne peut pas <strong>refuser de soigner</strong> quelqu'un en service, quelle que soit la situation.</div></div>
+    </div>
+    <div>
+      <div class="alert alert-amber"><span class="alert-icon">⚠️</span><div>Pas d'intervention sur scène active de fusillade. Se couvrir derrière un véhicule et attendre la sécurisation.</div></div>
+      <div class="alert alert-amber"><span class="alert-icon">⚠️</span><div>Aucune info médicale ne peut être transmise à la FDO sauf demande gouvernementale.</div></div>
+      <div class="alert alert-green"><span class="alert-icon">✅</span><div>Un EMS doit pousser la scène RP au maximum — le menu de soin seul ne suffit pas.</div></div>
+      <div class="alert alert-green"><span class="alert-icon">✅</span><div>Les Mort RP nécessitent une <strong>validation préalable</strong> d'un responsable. Seuls les médecins autorisés peuvent en initier.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ PROTOCOLES ═══════════════════════════════════ -->
+<div id="tab-protocoles" class="section">
+  <div class="page-title">Protocoles médicaux terrain</div>
+  <div class="page-sub">Procédures standardisées SAMC — Application terrain et hôpital</div>
+
+  <div class="section-title">Bilan initial — méthode ABCDE</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="steps">
+      <div class="step"><div class="step-n letter">A</div><div class="step-content"><div class="step-title">Airway — Voies aériennes</div><div class="step-desc">Vérifier que les voies aériennes sont libres. Le patient peut-il parler ? Si inconscient : subluxation mandibulaire, retirer tout corps étranger visible. Position latérale de sécurité (PLS) si inconscient et respire.</div></div></div>
+      <div class="step"><div class="step-n letter">B</div><div class="step-content"><div class="step-title">Breathing — Ventilation</div><div class="step-desc">Fréquence respiratoire, amplitude, symétrie. SpO₂. Signes de détresse : tirage, cyanose, battement des ailes du nez. Si arrêt respiratoire : bouteille O₂ + ventilation assistée immédiate.</div></div></div>
+      <div class="step"><div class="step-n letter">C</div><div class="step-content"><div class="step-title">Circulation — Hémodynamique</div><div class="step-desc">Pouls (fréquence, amplitude). Pression artérielle. Saignements actifs → compression directe immédiate 10 min. Garrot si membre (noter l'heure). Choc hémorragique si PA &lt;90/60 + FC &gt;100.</div></div></div>
+      <div class="step"><div class="step-n letter">D</div><div class="step-content"><div class="step-title">Disability — Neurologie</div><div class="step-desc">Score Glasgow (Yeux + Verbal + Moteur = max 15). Réactivité pupillaire (myosis/mydriase). AVPU : Alert / répond à la Voix / répond à la Douleur / Unresponsive.</div></div></div>
+      <div class="step"><div class="step-n letter">E</div><div class="step-content"><div class="step-title">Exposure — Exposition</div><div class="step-desc">Déshabiller le patient pour identifier TOUTES les lésions (entrée/sortie de balle, blessures cachées). Prévenir l'hypothermie. Ne pas déplacer si suspicion de fracture du rachis.</div></div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title">Protocole RCP — Arrêt cardio-respiratoire</div>
+      <div class="card">
+        <div class="alert alert-red" style="margin-bottom:12px"><span class="alert-icon">⚠️</span><div><strong>7 minutes sans O₂ = dommages cérébraux irréversibles.</strong> Ne jamais installer sur brancard avant RCP.</div></div>
+        <div class="steps">
+          <div class="step"><div class="step-n">1</div><div class="step-content"><div class="step-title">Sécuriser la scène &amp; appeler renforts</div><div class="step-desc">"10-33 — ACR en cours, besoin d'un équipage, [localisation]"</div></div></div>
+          <div class="step"><div class="step-n">2</div><div class="step-content"><div class="step-title">Confirmer ACR (&lt;10 secondes)</div><div class="step-desc">Absence de pouls carotidien + absence de respiration. Chercher, regarder, sentir.</div></div></div>
+          <div class="step"><div class="step-n">3</div><div class="step-content"><div class="step-title">MCE 30:2 immédiat</div><div class="step-desc">100–120/min, 5–6 cm de profondeur, relâchement complet. Interruptions &lt;10 sec.</div></div></div>
+          <div class="step"><div class="step-n">4</div><div class="step-content"><div class="step-title">Défibrillation si applicable</div><div class="step-desc"><strong>Asystolie :</strong> pas de choc — RCP continue. <strong>Fibrillation ventriculaire :</strong> choc indiqué. Règle des 3 chocs.</div></div></div>
+          <div class="step"><div class="step-n">5</div><div class="step-content"><div class="step-title">Stabilisation post-réa &amp; évacuation</div><div class="step-desc">Constantes toutes les 2 min. Évacuation médicalisée urgente vers PillBox Hill.</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Protocole choc hémorragique</div>
+      <div class="card">
+        <div class="steps">
+          <div class="step"><div class="step-n">1</div><div class="step-content"><div class="step-title">Identifier la source</div><div class="step-desc">Plaie ouverte, fracture, traumatisme interne. Abdomen rigide = suspicion d'hémorragie interne.</div></div></div>
+          <div class="step"><div class="step-n">2</div><div class="step-content"><div class="step-title">Contrôle hémorragique immédiat</div><div class="step-desc">Compression directe 10 min minimum. Garrot si membre avec hémorragie incontrôlable (noter l'heure). Pansement compressif stérile.</div></div></div>
+          <div class="step"><div class="step-n">3</div><div class="step-content"><div class="step-title">Évaluer les signes de choc</div><div class="step-desc">PA &lt;90/60 · FC &gt;100 · SpO₂ &lt;95% · Peau froide/moite · Confusion · Polypnée</div></div></div>
+          <div class="step"><div class="step-n">4</div><div class="step-content"><div class="step-title">Position + évacuation urgente</div><div class="step-desc">Allonger, surélever les MI si possible. Prévenir l'hôpital. Évacuation IMMÉDIATE.</div></div></div>
+        </div>
+      </div>
+
+      <div class="section-title">Protocole brûlures</div>
+      <div class="card">
+        <div class="alert alert-red" style="margin-bottom:10px"><span class="alert-icon">⛔</span><div>Ne JAMAIS retirer des vêtements collés à la peau — risque d'arracher la peau.</div></div>
+        <table class="tbl" style="margin-bottom:10px">
+          <tr><th>Degré</th><th>Description</th></tr>
+          <tr><td><span class="tag tag-green">1er</span></td><td>Rougeur, peau intacte (ex: coup de soleil)</td></tr>
+          <tr><td><span class="tag tag-amber">2e superficiel</span></td><td>Cloques, douleur intense</td></tr>
+          <tr><td><span class="tag tag-amber">2e profond</span></td><td>Couches profondes atteintes, destruction partielle</td></tr>
+          <tr><td><span class="tag tag-red">3e degré</span></td><td>Destruction totale, pas de douleur (nerfs détruits), greffe obligatoire</td></tr>
+        </table>
+        <div style="font-size:13px;color:var(--txt2);line-height:1.6">Hydrater (perfusion) · Couverture de survie (hypothermie) · Bloc pour brûlures graves. Pas de suture si brûlure grave.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ BLESSURES & ATA ═══════════════════════════════════ -->
+<div id="tab-blessures" class="section">
+  <div class="page-title">Blessures &amp; Système ATA</div>
+  <div class="page-sub">Durées de restriction, types de blessures et prise en charge — Règlement FlashFA</div>
+
+  <div class="section-title">Système ATA — Arrêt Temporaire d'Activité</div>
+  <div class="card" style="border-left:4px solid var(--red);margin-bottom:1rem">
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;line-height:1.7">L'ATA est émis par le SAMC à la suite d'une blessure par arme (blanche ou à feu) ou d'un accident. Il entraîne une restriction du personnage proportionnelle à la gravité. <strong>Durée maximale : 24 heures.</strong></div>
+    <table class="tbl">
+      <tr><th>Gravité</th><th>Durée ATA</th><th>Exemples</th></tr>
+      <tr><td><span class="tag tag-green">Légère</span></td><td style="font-weight:700;color:var(--green)">24 – 45 minutes</td><td>Plaie superficielle, contusion, suture simple</td></tr>
+      <tr><td><span class="tag tag-amber">Modérée</span></td><td style="font-weight:700;color:var(--amber)">45 min – 2 heures</td><td>PAB modérée, fracture simple</td></tr>
+      <tr><td><span class="tag tag-red">Lourde</span></td><td style="font-weight:700;color:var(--red)">2 – 24 heures</td><td>PAF, PAB sévère, polytraumatisme</td></tr>
+      <tr><td><span class="tag tag-red">Critique / RCP</span></td><td style="font-weight:700;color:var(--red)">12 – 24 heures</td><td>ACR, hémorragie massive, réanimation</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">Blessures par arme blanche (PAB)</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="grid-2">
+      <div>
+        <table class="tbl">
+          <tr><th>Type</th><th>Description</th></tr>
+          <tr><td><span class="tag tag-green">Linéaire / légère</span></td><td>Incision nette superficielle — suture ou strips possibles</td></tr>
+          <tr><td><span class="tag tag-amber">Profonde</span></td><td>Atteinte musculaire, vasculaire, nerveuse → bloc obligatoire</td></tr>
+          <tr><td><span class="tag tag-red">Transfixiante</span></td><td>L'objet transperce complètement le membre (orifice entrée + sortie) → bloc</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0">Prise en charge terrain</div>
+        <div class="steps">
+          <div class="step"><div class="step-n" style="width:22px;height:22px;font-size:11px">1</div><div class="step-desc">Compression directe de la plaie</div></div>
+          <div class="step"><div class="step-n" style="width:22px;height:22px;font-size:11px">2</div><div class="step-desc">Ne JAMAIS retirer l'objet si encore présent dans la plaie</div></div>
+          <div class="step"><div class="step-n" style="width:22px;height:22px;font-size:11px">3</div><div class="step-desc">Évaluer atteinte abdominale (défense, douleur à la palpation)</div></div>
+          <div class="step"><div class="step-n" style="width:22px;height:22px;font-size:11px">4</div><div class="step-desc">Call radio avant opération en tant que Trainee</div></div>
+          <div class="step"><div class="step-n" style="width:22px;height:22px;font-size:11px">5</div><div class="step-desc">Évacuation chirurgicale si plaie profonde</div></div>
+        </div>
+        <div class="alert alert-amber" style="margin-top:10px"><span class="alert-icon">💰</span><div>Légère : <strong>$1 000</strong> · Sévère : <strong>$1 750</strong> · +Réa si ACR : <strong>$400</strong></div></div>
+      </div>
+    </div>
+    <div class="alert alert-amber" style="margin-top:10px"><span class="alert-icon">⚠️</span><div><strong>Risques majeurs PAB :</strong> hémorragies, atteintes nerveuses, tendineuses et vasculaires. La profondeur est le facteur clé.</div></div>
+  </div>
+
+  <div class="section-title">Blessures par arme à feu (PAF)</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="grid-2">
+      <div>
+        <table class="tbl">
+          <tr><th>Situation</th><th>Action</th></tr>
+          <tr><td>Balle traversante, côté du membre (légère)</td><td>Suture possible</td></tr>
+          <tr><td>Balle encore dans le corps</td><td><strong>BLOC IMMÉDIAT</strong> — ne jamais laisser</td></tr>
+          <tr><td>PAF avec ACR</td><td>RCP d'abord, extraction ensuite</td></tr>
+          <tr><td>Hémorragie de membre</td><td>Garrot (noter l'heure)</td></tr>
+          <tr><td>Plaie thoracique</td><td>Pansement occlusif 3 côtés</td></tr>
+        </table>
+        <div class="alert alert-amber" style="margin-top:10px"><span class="alert-icon">💰</span><div>PAF : <strong>$2 000</strong> · +Réanimation : <strong>$400</strong> · +Prescription : <strong>$100</strong></div></div>
+      </div>
+      <div>
+        <div class="alert alert-red"><span class="alert-icon">⚠️</span><div><strong>Trajectoire balistique :</strong> le projectile peut ricocher sur un os, se fragmenter et causer des dégâts en chaîne. Toujours explorer complètement.</div></div>
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Ne jamais extraire un projectile sur le terrain — bloc obligatoire.</div></div>
+        <div style="font-size:13px;color:var(--txt2);margin-top:10px;line-height:1.6"><strong>Risques :</strong> os brisés, muscles déchirés, nerfs sectionnés, vaisseaux perforés, hémorragie interne ou externe massive.</div>
+        <div class="alert alert-blue" style="margin-top:10px"><span class="alert-icon">ℹ️</span><div>Le SAMC peut émettre des <strong>ATA de 5h à une immobilisation complète</strong> selon la gravité des blessures par balle.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Autres blessures</div>
+  <div class="grid-2">
+    <div class="accordion">
+      <div class="acc-head" onclick="toggle(this)"><div class="acc-head-left"><span class="tag tag-amber">TRAUMA</span><span class="acc-title">Traumatisme / accident de la route</span></div><span class="acc-chevron">▼</span></div>
+      <div class="acc-body">
+        <table class="tbl" style="margin-top:12px">
+          <tr><th>Type</th><th>Points clés</th></tr>
+          <tr><td>Fractures</td><td>Membres, bassin, rachis — immobilisation</td></tr>
+          <tr><td>Traumatisme crânien</td><td>GCS, pupilles, vomissements en jet</td></tr>
+          <tr><td>Hémorragie interne</td><td>Abdomen/thorax douloureux à la palpation</td></tr>
+          <tr><td>Rachis</td><td>Immobilisation stricte si suspicion → ne pas mobiliser</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="acc-head" onclick="toggle(this)"><div class="acc-head-left"><span class="tag tag-blue">INTOX</span><span class="acc-title">Intoxication / overdose</span></div><span class="acc-chevron">▼</span></div>
+      <div class="acc-body">
+        <table class="tbl" style="margin-top:12px">
+          <tr><th>Signe</th><th>Description</th></tr>
+          <tr><td>Pupilles</td><td>Myosis (opiacés) ou Mydriase (stimulants)</td></tr>
+          <tr><td>Conscience</td><td>Agitation ou stupeur selon produit</td></tr>
+          <tr><td>Respiration</td><td>Bradypnée (opiacés) ou polypnée (stimulants)</td></tr>
+          <tr><td>Action</td><td>PLS, voies aériennes libres, O₂, évacuation</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ CHIRURGIE ═══════════════════════════════════ -->
+<div id="tab-chirurgie" class="section">
+  <div class="page-title">Chirurgie &amp; Bloc opératoire</div>
+  <div class="page-sub">Procédures, règles de stérilité, anesthésie — Principes fondamentaux de la chirurgie SAMC</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title">Tenues et uniformes</div>
+      <div class="card" style="margin-bottom:1rem">
+        <table class="tbl">
+          <tr><th>Tenue</th><th>Usage</th></tr>
+          <tr><td><span class="tag tag-teal">Bloc</span></td><td>Scrub turquoise + gants + masque + stéthoscope (tout stérile)</td></tr>
+          <tr><td><span class="tag tag-red">Paramedic</span></td><td>Scrub bordeaux</td></tr>
+          <tr><td><span class="tag" style="background:#fce4ec;color:#880e4f">Trainee</span></td><td>Scrub rose</td></tr>
+          <tr><td><span class="tag tag-amber">Extérieur</span></td><td>Uniforme manches courtes</td></tr>
+          <tr><td><span class="tag tag-navy">Cérémonie</span></td><td>Uniforme manches longues</td></tr>
+          <tr><td><span class="tag tag-red">Fire Dept</span></td><td>Tenue de pompier</td></tr>
+        </table>
+      </div>
+
+      <div class="section-title">Zones du bloc opératoire</div>
+      <div class="card" style="margin-bottom:1rem">
+        <table class="tbl">
+          <tr><th>Zone</th><th>Délimitation</th><th>Description</th></tr>
+          <tr><td><span class="tag tag-navy">Non-stérile</span></td><td>Hors bloc</td><td>Vestiaires, bureaux, couloirs généraux</td></tr>
+          <tr><td><span class="tag tag-amber">Semi-stérile</span></td><td>Sol blanc</td><td>Corridor du bloc — zone de transition</td></tr>
+          <tr><td><span class="tag tag-teal">Stérile</span></td><td>Sol bleu</td><td>Salle d'opération — stérilité absolue</td></tr>
+        </table>
+      </div>
+
+      <div class="section-title">Actes autorisés par grade</div>
+      <div class="card">
+        <table class="tbl">
+          <tr><th>Grade</th><th>Actes autorisés</th></tr>
+          <tr><td><span class="tag tag-red">Trainee</span></td><td>Membres uniquement (bras, jambes, mains, pieds). PAB abdominale peu profonde en rush (avec call radio avant).</td></tr>
+          <tr><td><span class="tag tag-amber">EMT / Paramedic</span></td><td>Zones complexes — thorax, organes proches des membres — avec supervision</td></tr>
+          <tr><td><span class="tag tag-blue">Chirurgien / Docteur</span></td><td>Tronc complet (thorax, abdomen, pelvis, dos, cou), tête — organes vitaux et grands vaisseaux</td></tr>
+          <tr><td><span class="tag tag-red">INTERDIT à tous</span></td><td>Organes vitaux seul ou sans qualification. Ne jamais prendre de décision chirurgicale seul sans accord d'un chirurgien.</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Hygiène &amp; Stérilité — Principes absolus</div>
+      <div class="card" style="margin-bottom:1rem">
+        <table class="tbl" style="margin-bottom:12px">
+          <tr><th>Principe</th><th>Définition</th></tr>
+          <tr><td><strong>Asepsie</strong></td><td>Prévenir la contamination — éviter que des micro-organismes contactent la zone opératoire</td></tr>
+          <tr><td><strong>Antisepsie</strong></td><td>Détruire les micro-organismes sur les tissus vivants avant/pendant l'opération</td></tr>
+          <tr><td><strong>Stérilité</strong></td><td>Garantir que le matériel est exempt de tout micro-organisme</td></tr>
+        </table>
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Rupture de stérilité → changement immédiat de gants/instruments. Si patient ouvert = risque d'infection nosocomiale voire arrêt cardiaque.</div></div>
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Lavage des mains OBLIGATOIRE avant d'entrer et en sortant du bloc. Utiliser la lotion stérile.</div></div>
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>INTERDIT : selfies, distractions, téléphone au bloc, ciseaux chirurgicaux sans accord, toucher sans instruction.</div></div>
+      </div>
+
+      <div class="section-title">Règles comportementales bloc</div>
+      <div class="card">
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Ne jamais prendre une décision chirurgicale seul, quel que soit l'acte.</div></div>
+        <div class="alert alert-red"><span class="alert-icon">⛔</span><div>Ne jamais manipuler des tissus sans ordre du chirurgien : pas de suture, coupe, touche sans instruction.</div></div>
+        <div class="alert alert-amber"><span class="alert-icon">⚠️</span><div>Alerter IMMÉDIATEMENT un chirurgien si : doute sur la stérilité, problème matériel, changement d'état du patient, saignement inhabituel, mouvement inattendu.</div></div>
+        <div class="alert alert-green"><span class="alert-icon">✅</span><div>Si seul et patient très grave : induire un coma artificiel pour stabiliser le temps des renforts qualifiés. Si on ne sait pas faire → ON NE FAIT PAS.</div></div>
+        <div class="alert alert-blue"><span class="alert-icon">ℹ️</span><div>Musique chill tolérée si elle ne perturbe pas la concentration. Communication = priorité absolue au bloc.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Procédure opératoire — Étapes du bloc</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><div class="step-content"><div class="step-title">Installation pré-opératoire</div><div class="step-desc">Installer le patient en position confortable + exposant la zone à opérer. Parler avec le patient pour le détendre. Vérifier le matériel (check-list). Surveillance : FC, tension, SpO₂. Échographie si nécessaire.</div></div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-content"><div class="step-title">Préparation du champ stérile</div><div class="step-desc">Déshabiller le patient. Antisepsie cutanée (bétadine). Mise en place des champs stériles autour de la zone. Ne JAMAIS mélanger zone stérile et non stérile.</div></div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-content"><div class="step-title">Exploration de la plaie</div><div class="step-desc">État des lieux complet sans manipulation non autorisée. Aspirateur chirurgical pour dégager le champ. Identifier les structures anatomiques (muscles, nerfs, vaisseaux). Maintenir la plaie ouverte pour la vision du chirurgien.</div></div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-content"><div class="step-title">Hémostase — Priorité absolue si saignement</div><div class="step-desc">Compression avec compresses stériles. Pince hémostatique pour clamper les vaisseaux. Relâcher DOUCEMENT la pince (vidage vasculaire fatal si relâchement brutal). Suturer veine/artère avec précaution.</div></div></div>
+      <div class="step"><div class="step-n">5</div><div class="step-content"><div class="step-title">Parage, nettoyage &amp; irrigation</div><div class="step-desc">Exciser les tissus non viables. Irrigation abondante : bétadine + sérum physiologique. Retirer tous les corps étrangers (balle, débris). La plaie doit être propre avant fermeture.</div></div></div>
+      <div class="step"><div class="step-n">6</div><div class="step-content"><div class="step-title">Sutures</div><div class="step-desc"><strong>Fil non résorbable :</strong> externe (peau). <strong>Fil résorbable :</strong> interne (muscles, vaisseaux). <strong>Monofilament :</strong> sutures simples, artères. <strong>Multifilament :</strong> sutures complexes. Pas de suture si brûlure grave (greffe obligatoire).</div></div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Anesthésie</div>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>Type</th><th>Usage</th><th>Produits</th></tr>
+      <tr><td><strong>Locale</strong></td><td>Zone précise (main, doigt) — petites interventions superficielles</td><td>Lidocaïne, Prilocaïne (injection sur place, nettoyer avant)</td></tr>
+      <tr><td><strong>Loco-régionale</strong></td><td>Bras ou jambe complet</td><td>Ropivacaïne, Bupivacaïne (attention aux allergies et dérivés croisés)</td></tr>
+      <tr><td><strong>Générale</strong></td><td>Tout le corps — interventions longues et douloureuses</td><td>Propofol (inducteur) + Relaxant musculaire + Morphine/Fentanyl</td></tr>
+    </table>
+    <div class="alert alert-red" style="margin-top:12px"><span class="alert-icon">⚠️</span><div>Toujours vérifier les allergies avant toute injection. Doser précisément. Surveiller les constantes en permanence.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ CODES RADIO ═══════════════════════════════════ -->
+<div id="tab-radio" class="section">
+  <div class="page-title">Codes radio SAMC</div>
+  <div class="page-sub">Référence complète issue de la formation officielle FlashFA</div>
+
+  <div class="section-title">Codes de statut opérationnel</div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card" style="border-left:4px solid var(--green)">
+      <div style="font-size:24px;font-weight:800;color:var(--green);font-family:monospace">Code 4</div>
+      <div style="font-size:14px;font-weight:600;margin:4px 0">Disponible — En patrouille</div>
+      <div style="font-size:13px;color:var(--txt2)">Ambulance disponible pour intervention. Annonce de retour disponibilité.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--amber)">
+      <div style="font-size:24px;font-weight:800;color:var(--amber);font-family:monospace">Code 3</div>
+      <div style="font-size:14px;font-weight:600;margin:4px 0">En intervention — Terrain</div>
+      <div style="font-size:13px;color:var(--txt2)">Ambulance sur scène, patient pris en charge. Patrouille active.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--blue)">
+      <div style="font-size:24px;font-weight:800;color:var(--blue);font-family:monospace">Code 6</div>
+      <div style="font-size:14px;font-weight:600;margin:4px 0">À l'hôpital — Bloc/soins</div>
+      <div style="font-size:13px;color:var(--txt2)">Personnel en service hôpital. Accueil, tri, orientation patients. Heure de prise Dispatch : 21h30.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red)">
+      <div style="font-size:24px;font-weight:800;color:var(--red);font-family:monospace">10-33</div>
+      <div style="font-size:14px;font-weight:600;margin:4px 0">URGENCE ABSOLUE</div>
+      <div style="font-size:13px;color:var(--txt2)">Détresse EMS / MAYDAY — besoin immédiat de renforts. Priorité absolue.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Codes 10 — Liste complète</div>
+  <div class="code-grid" style="margin-bottom:1rem">
+    <div class="code-item"><span class="code-num">10-1</span><span class="code-def">Radio défectueuse</span></div>
+    <div class="code-item"><span class="code-num">10-3</span><span class="code-def">Retour radio</span></div>
+    <div class="code-item active-status"><span class="code-num">10-4</span><span class="code-def">Affirmatif / Reçu</span></div>
+    <div class="code-item"><span class="code-num">10-5</span><span class="code-def">Négatif</span></div>
+    <div class="code-item"><span class="code-num">10-6</span><span class="code-def">Occupé / En procédure</span></div>
+    <div class="code-item"><span class="code-num">10-7</span><span class="code-def">Hors service temporairement</span></div>
+    <div class="code-item active-status"><span class="code-num">10-8</span><span class="code-def">Prise de service</span></div>
+    <div class="code-item"><span class="code-num">10-9</span><span class="code-def">Répétez</span></div>
+    <div class="code-item"><span class="code-num">10-10</span><span class="code-def">Fin de service</span></div>
+    <div class="code-item"><span class="code-num">10-12</span><span class="code-def">Attente de dispatch</span></div>
+    <div class="code-item"><span class="code-num">10-20</span><span class="code-def">Votre localisation ?</span></div>
+    <div class="code-item"><span class="code-num">10-22</span><span class="code-def">Annuler / Ignorer</span></div>
+    <div class="code-item"><span class="code-num">10-23</span><span class="code-def">Stand by / En attente</span></div>
+    <div class="code-item critical"><span class="code-num">10-31</span><span class="code-def">Tirs armes à feu signalés</span></div>
+    <div class="code-item critical"><span class="code-num">10-35</span><span class="code-def">Demande de renfort</span></div>
+    <div class="code-item"><span class="code-num">10-41</span><span class="code-def">Début de patrouille</span></div>
+    <div class="code-item"><span class="code-num">10-42</span><span class="code-def">Fin de patrouille</span></div>
+    <div class="code-item"><span class="code-num">10-50</span><span class="code-def">Accident léger (AVP)</span></div>
+    <div class="code-item critical"><span class="code-num">10-51</span><span class="code-def">Accident grave</span></div>
+    <div class="code-item critical"><span class="code-num">10-99</span><span class="code-def">Agent en danger — besoin d'aide immédiat</span></div>
+    <div class="code-item critical" style="grid-column:1/-1"><span class="code-num" style="min-width:80px">SITREP</span><span class="code-def">Rapport de situation — compte-rendu complet de la scène à la centrale</span></div>
+  </div>
+
+  <div class="section-title">Triage — Priorités d'intervention</div>
+  <div class="card" style="margin-bottom:1rem">
+    <table class="tbl">
+      <tr><th>Priorité</th><th>Signification</th><th>Exemples</th></tr>
+      <tr><td><span class="tag tag-red">P1 — Urgence absolue</span></td><td>Risque vital immédiat</td><td>ACR, hémorragie massive, asphyxie, inconscient</td></tr>
+      <tr><td><span class="tag tag-amber">P2 — Urgence relative</span></td><td>Blessure grave mais stable</td><td>PAF, PAB sévère, polytraumatisme, choc débutant</td></tr>
+      <tr><td><span class="tag tag-green">P3 — Urgence légère</span></td><td>Soins différables</td><td>Plaie superficielle, contusion, fracture simple</td></tr>
+      <tr><td><span class="tag tag-blue">Mort RP</span></td><td>Décès constaté</td><td>Validation responsable obligatoire — indicateur stéthoscope</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">Phraséologie radio — Exemples pratiques</div>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>Situation</th><th>Formulation radio</th></tr>
+      <tr><td>Prise en charge PAF</td><td><code style="font-size:12px;color:var(--blue)">"Centrale, unité 2, on prend en charge un patient PAF, Elgin Avenue, on est code 3."</code></td></tr>
+      <tr><td>Transport vers hôpital</td><td><code style="font-size:12px;color:var(--blue)">"Centrale, on est en route vers PillBox, patient P2, PAB abdominale, ETA 2 minutes."</code></td></tr>
+      <tr><td>ACR — urgence absolue</td><td><code style="font-size:12px;color:var(--red)">"10-33 ! ACR confirmé, besoin d'un équipage supplémentaire, Grove Street."</code></td></tr>
+      <tr><td>Fin d'intervention</td><td><code style="font-size:12px;color:var(--blue)">"Centrale, unité 2, patient déposé PillBox, on repasse code 4."</code></td></tr>
+      <tr><td>Coordination LSPD</td><td><code style="font-size:12px;color:var(--blue)">"LSPD, SAMC unité 1, scène sécurisée ? On peut approcher le patient ?"</code></td></tr>
+      <tr><td>Prise de service</td><td><code style="font-size:12px;color:var(--blue)">"Centrale, [Nom] — 10-8, unité 1, code 4, début de patrouille."</code></td></tr>
+      <tr><td>Demande de renfort</td><td><code style="font-size:12px;color:var(--red)">"10-35, besoin de renfort médical urgent, [localisation], patient P1."</code></td></tr>
+      <tr><td>MAYDAY incendie</td><td><code style="font-size:12px;color:var(--red)">"MAYDAY MAYDAY, [Nom] en danger, [localisation], besoin d'évacuation immédiate !"</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ VÉHICULES ═══════════════════════════════════ -->
+<div id="tab-vehicules" class="section">
+  <div class="page-title">Flotte SAMC — FlashFA</div>
+  <div class="page-sub">Capacités, usages et équipements de chaque véhicule disponible</div>
+
+  <div class="section-title">Ambulances — Véhicules médicaux prioritaires</div>
+  <div class="grid-2" style="margin-bottom:1rem">
+    <div class="card" style="border-left:4px solid var(--red)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:16px;font-weight:800">Ambu3</span><span class="tag tag-red">Prioritaire</span></div>
+      <div style="font-size:13px;color:var(--txt3);margin-bottom:6px">Capacité : jusqu'à 7 personnes</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">La plus équipée de la flotte. Brancard inclus. <strong>Opérations d'urgence possibles si situation critique.</strong> Véhicule à privilégier pour toutes les interventions complexes.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--amber)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:16px;font-weight:800">Ambu2</span><span class="tag tag-amber">Standard</span></div>
+      <div style="font-size:13px;color:var(--txt3);margin-bottom:6px">Capacité : 3 personnes</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6">Moins équipée qu'Ambu3. Brancard inclus. Missions légères ou backup. Usage de routine.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Véhicules médicaux terrestres</div>
+  <div class="grid-3" style="margin-bottom:1rem">
+    <div class="vehicle-card"><div class="vehicle-name">Karakara (4x4)</div><div class="vehicle-cap">4 personnes</div><div class="vehicle-desc">Prise en charge patient en zone difficile. Équipé d'outils médicaux.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Buggy / Quad</div><div class="vehicle-cap">2 personnes</div><div class="vehicle-desc">2 trousses de secours. Intervention rapide en zone difficile d'accès.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Alamo</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Véhicule de reconnaissance. Peut appeler une ambulance si nécessaire.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Outlaw (Buggy)</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Reconnaissance montagne et zones difficiles d'accès.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">STX</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Véhicule de supervision — commandement staff.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">CM21</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Réservé aux hauts gradés uniquement.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">4x4 Poste Commande</div><div class="vehicle-cap">—</div><div class="vehicle-desc">SAMC — gestion de crise et commandement.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Coroner</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Transport d'organes ou de corps — usage médico-légal.</div></div>
+    <div class="vehicle-card"><div class="vehicle-name">Corbillard</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Transport de la morgue au cimetière.</div></div>
+  </div>
+
+  <div class="section-title">Véhicules héliportés</div>
+  <div class="grid-3" style="margin-bottom:1rem">
+    <div class="vehicle-card" style="border-left:3px solid var(--blue)"><div class="vehicle-name">Maverick ("Écureuil")</div><div class="vehicle-cap">9 personnes max</div><div class="vehicle-desc">Zone urbaine. Polyvalent. <strong>Descente en rappel possible.</strong> À maîtriser pour interventions en hauteur.</div></div>
+    <div class="vehicle-card" style="border-left:3px solid var(--red)"><div class="vehicle-name">Valkirie</div><div class="vehicle-cap">—</div><div class="vehicle-desc">Lance incendie + brancard. Interventions FIRE en montagne ou zone hostile.</div></div>
+    <div class="vehicle-card" style="border-left:3px solid var(--teal)"><div class="vehicle-name">Swift</div><div class="vehicle-cap">Capacité réduite</div><div class="vehicle-desc">Zone hostile / montagne. Brancard inclus. SAR (Search And Rescue).</div></div>
+  </div>
+
+  <div class="section-title">Véhicules incendie</div>
+  <div class="grid-2">
+    <div class="vehicle-card" style="border-left:3px solid var(--red)"><div class="vehicle-name">Engine (Camion incendie)</div><div class="vehicle-cap">4 personnes</div><div class="vehicle-desc">Lance à eau. Intervention incendie standard.</div></div>
+    <div class="vehicle-card" style="border-left:3px solid var(--red)"><div class="vehicle-name">Ladder (Camion échelle)</div><div class="vehicle-cap">6 personnes</div><div class="vehicle-desc">Échelle + lance à eau. Intervention en hauteur (immeubles, structures élevées).</div></div>
+  </div>
+
+  <div class="alert alert-blue" style="margin-top:1rem"><span class="alert-icon">ℹ️</span><div><strong>Rappel règlement :</strong> Il est interdit de transporter des patients dans des véhicules non adaptés. Utiliser uniquement Ambu2, Ambu3, Karakara ou hélicos équipés.</div></div>
+</div>
+
+<!-- ═══════════════════════════════════ GRADES ═══════════════════════════════════ -->
+<div id="tab-grades" class="section">
+  <div class="page-title">Hiérarchie, Grades &amp; Dispatch</div>
+  <div class="page-sub">Structure de commandement SAMC — FlashFA</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title">Grades médicaux (EMS)</div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="grade-row"><div class="grade-num">1</div><div class="grade-info"><div class="grade-name">Training (Stagiaire)</div><div class="grade-desc">En apprentissage — encadré en permanence par un senior</div></div></div>
+        <div class="grade-row"><div class="grade-num">2</div><div class="grade-info"><div class="grade-name">EMT</div><div class="grade-desc">Apprentissage validé — peut intervenir avec supervision</div></div></div>
+        <div class="grade-row"><div class="grade-num">3</div><div class="grade-info"><div class="grade-name">EMT Spécialiste</div><div class="grade-desc">Spécialisation possible dans un domaine médical</div></div></div>
+        <div class="grade-row"><div class="grade-num">4</div><div class="grade-info"><div class="grade-name">Paramedic</div><div class="grade-desc">Responsabilités élargies — gestion autonome des interventions</div></div></div>
+        <div class="grade-row"><div class="grade-num">5</div><div class="grade-info"><div class="grade-name">Master Paramedic</div><div class="grade-desc">Niveau expert — forme les niveaux inférieurs</div></div></div>
+        <div class="grade-row"><div class="grade-num">6</div><div class="grade-info"><div class="grade-name">Interne</div><div class="grade-desc">Gère une équipe — début de responsabilités d'encadrement</div></div></div>
+        <div class="grade-row"><div class="grade-num">7</div><div class="grade-info"><div class="grade-name">Docteur</div><div class="grade-desc">Spécialiste médecine — traitement complet des patients</div></div></div>
+        <div class="grade-row"><div class="grade-num">8</div><div class="grade-info"><div class="grade-name">Supervision</div><div class="grade-desc">Gère l'hôpital — organisation et administration</div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Grades de commandement</div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="grade-row"><div class="grade-num" style="background:var(--blue)">9</div><div class="grade-info"><div class="grade-name">Medical Lieutenant</div><div class="grade-desc">Encadrement opérationnel — liaison terrain/commandement</div></div></div>
+        <div class="grade-row"><div class="grade-num" style="background:var(--blue)">10</div><div class="grade-info"><div class="grade-name">Medical Capitaine</div><div class="grade-desc">Commandement des unités médicales</div></div></div>
+        <div class="grade-row"><div class="grade-num" style="background:var(--purple)">11</div><div class="grade-info"><div class="grade-name">Bataillon Chef</div><div class="grade-desc">Chef de bataillon — plusieurs unités</div></div></div>
+        <div class="grade-row"><div class="grade-num" style="background:var(--purple)">12</div><div class="grade-info"><div class="grade-name">Division Commander</div><div class="grade-desc">Commandement de division</div></div></div>
+        <div class="grade-row"><div class="grade-num" style="background:var(--red)">13</div><div class="grade-info"><div class="grade-name">Fire &amp; Heal Chef</div><div class="grade-desc">Chef suprême des services incendie et médicaux</div></div></div>
+      </div>
+
+      <div class="section-title">Dispatch — Rôle &amp; Procédures</div>
+      <div class="card">
+        <div class="alert alert-blue" style="margin-bottom:12px"><span class="alert-icon">🕘</span><div>Heure de prise de service Dispatch → Hôpital : <strong>21h30</strong></div></div>
+        <table class="tbl">
+          <tr><th>Code</th><th>Rôle du dispatcher</th></tr>
+          <tr><td><span class="tag tag-blue">Code 6</span></td><td>Accueil et tri des patients à l'hôpital. Première instance : prise des infos → orientation vers médecin de garde. Si toutes les unités occupées : le médecin de garde prend en charge TOUS les nouveaux patients.</td></tr>
+          <tr><td><span class="tag tag-amber">Code 3</span></td><td>Patrouille en ambulance. EMS 1 avec équipier. Intervention directe sur le terrain.</td></tr>
+        </table>
+        <div style="font-size:13px;color:var(--txt2);margin-top:12px;line-height:1.6"><strong>Missions Dispatch :</strong> Attribution des codes aux unités, gestion des appels citoyens, backup SASP si nécessaire, communication radio (position donnée → call radio).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Règles incendie — FIRE</div>
+  <div class="card">
+    <div class="grid-2">
+      <div>
+        <div class="alert alert-red"><span class="alert-icon">🔥</span><div><strong>RÈGLE 1 :</strong> Suivre le lead en intervention. Obéissance immédiate, pas de questions en cours d'action.</div></div>
+        <div class="alert alert-red"><span class="alert-icon">🔥</span><div><strong>RÈGLE 2 :</strong> MINIMUM en binômes — ULTRA IMPORTANT. On ne part JAMAIS seul en intervention FIRE.</div></div>
+        <div class="alert alert-amber"><span class="alert-icon">📻</span><div>Communication OBLIGATOIRE durant toute intervention. MAYDAY si danger immédiat pour l'équipe.</div></div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0">Triangle du feu — Pour éteindre : briser un côté</div>
+        <table class="tbl">
+          <tr><th>Élément</th><th>Moyen d'extinction</th></tr>
+          <tr><td>Comburant (O₂)</td><td>Étouffement, CO₂</td></tr>
+          <tr><td>Carburant (combustible)</td><td>Retirer le combustible</td></tr>
+          <tr><td>Énergie (chaleur)</td><td>Refroidissement (eau)</td></tr>
+        </table>
+        <table class="tbl" style="margin-top:10px">
+          <tr><th>Extincteur</th><th>Type de feu</th></tr>
+          <tr><td>Eau + additif</td><td>Domestique, forêt (bois, papier)</td></tr>
+          <tr><td><strong>CO₂</strong></td><td>Électrique — ne pas endommager équipements</td></tr>
+          <tr><td>Poudre</td><td>Polyvalent — gaz</td></tr>
+          <tr><td>Mousse</td><td>Hydrocarbures (essence, huile, solvants)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ PHARMACOLOGIE ═══════════════════════════════════ -->
+<div id="tab-pharma" class="section">
+  <div class="page-title">Pharmacologie SAMC</div>
+  <div class="page-sub">Médicaments, anesthésiants et produits utilisés dans les soins</div>
+
+  <div class="alert alert-red" style="margin-bottom:1rem"><span class="alert-icon">⚠️</span><div><strong>Transfusion sanguine :</strong> vérifier OBLIGATOIREMENT le groupe sanguin avant administration. Une erreur de groupe peut être mortelle.</div></div>
+  <div class="alert alert-amber" style="margin-bottom:1rem"><span class="alert-icon">⚠️</span><div>Toujours vérifier les allergies avant toute injection. Certains produits (Ropivacaïne, Bupivacaïne) ont des dérivés croisés. Surveiller les constantes après administration.</div></div>
+
+  <div class="section-title">Tableau des médicaments principaux</div>
+  <div class="pharma-grid" style="margin-bottom:1rem">
+    <div class="pharma-card"><div class="pharma-name">Antibiotiques</div><div class="pharma-role">Combattre les infections bactériennes. À donner si risque infectieux post-opératoire ou plaie souillée.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Antidouleurs (antalgiques)</div><div class="pharma-role">Soulager la douleur. Morphine, paracétamol, AINS. Adapter la dose à la douleur et au contexte.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Anti-inflammatoires</div><div class="pharma-role">Réduire l'inflammation. Complémentaire aux antalgiques.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Anticoagulants</div><div class="pharma-role">Prévenir les caillots et thromboses post-op.<div class="pharma-warn">Attention : risque hémorragique accru.</div></div></div>
+    <div class="pharma-card"><div class="pharma-name">Adrénaline</div><div class="pharma-role">Urgence vitale : arrêt cardiaque, choc anaphylactique. Injection rapide IV ou IM.<div class="pharma-warn">Produit d'urgence — usage en ACR ou choc allergique uniquement.</div></div></div>
+    <div class="pharma-card"><div class="pharma-name">Antihistaminiques</div><div class="pharma-role">Traiter les réactions allergiques. Complément à l'adrénaline si choc anaphylactique.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Antiviraux</div><div class="pharma-role">Traiter les infections virales.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Antiparasitaires</div><div class="pharma-role">Traiter les infections parasitaires.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Pommades / topiques</div><div class="pharma-role">Soins locaux : cicatrisation, anti-infectieux locaux, brûlures légères.</div></div>
+    <div class="pharma-card"><div class="pharma-name">Transfusion sanguine</div><div class="pharma-role">Remplacement du sang perdu lors d'hémorragie majeure.<div class="pharma-warn">VÉRIFIER le groupe sanguin AVANT — erreur = mortelle.</div></div></div>
+    <div class="pharma-card"><div class="pharma-name">Antidépresseurs</div><div class="pharma-role">Gestion de la santé mentale. À manier avec beaucoup de précaution, prescription stricte.</div></div>
+  </div>
+
+  <div class="section-title">Anesthésiants — Référence rapide</div>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>Produit</th><th>Type</th><th>Usage</th></tr>
+      <tr><td><strong>Propofol</strong></td><td><span class="tag tag-blue">Inducteur général</span></td><td>Endort le patient rapidement — anesthésie générale</td></tr>
+      <tr><td><strong>Morphine</strong></td><td><span class="tag tag-purple">Analgésique puissant</span></td><td>Gestion de la douleur pendant et après l'acte</td></tr>
+      <tr><td><strong>Fentanyl</strong></td><td><span class="tag tag-purple">Analgésique puissant</span></td><td>Analgésie peropératoire — plus puissant que la morphine</td></tr>
+      <tr><td><strong>Lidocaïne</strong></td><td><span class="tag tag-green">Anesthésique local</span></td><td>Injection sur la zone précise (main, doigt, suture légère)</td></tr>
+      <tr><td><strong>Prilocaïne</strong></td><td><span class="tag tag-green">Anesthésique local</span></td><td>Identique à la Lidocaïne — nettoyer la zone avant injection</td></tr>
+      <tr><td><strong>Ropivacaïne</strong></td><td><span class="tag tag-amber">Loco-régional</span></td><td>Membre entier (bras ou jambe complet)</td></tr>
+      <tr><td><strong>Bupivacaïne</strong></td><td><span class="tag tag-amber">Loco-régional</span></td><td>Membre entier — attention aux dérivés croisés allergiques</td></tr>
+      <tr><td><strong>Relaxant musculaire</strong></td><td><span class="tag tag-teal">Adjuvant AG</span></td><td>Détend les muscles — le patient ne bouge plus pendant l'acte</td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">Glossaire médical</div>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>Terme</th><th>Définition</th></tr>
+      <tr><td><strong>RCP</strong></td><td>Réanimation Cardio-Pulmonaire — massage cardiaque 30:2 + ventilation</td></tr>
+      <tr><td><strong>Asystolie</strong></td><td>Arrêt total du cœur — PAS de choc électrique (défibrillation inefficace)</td></tr>
+      <tr><td><strong>Fibrillation ventriculaire</strong></td><td>Rythme cardiaque chaotique — choc électrique indiqué</td></tr>
+      <tr><td><strong>Hémostase</strong></td><td>Arrêt du saignement par compression et/ou suture vasculaire</td></tr>
+      <tr><td><strong>Asepsie</strong></td><td>Prévention de toute contamination de la zone opératoire</td></tr>
+      <tr><td><strong>Antisepsie</strong></td><td>Destruction des micro-organismes sur tissu vivant</td></tr>
+      <tr><td><strong>Plaie transfixiante</strong></td><td>Objet qui transperce complètement un membre (orifice entrée + sortie)</td></tr>
+      <tr><td><strong>Infection nosocomiale</strong></td><td>Infection contractée lors d'un séjour en établissement de santé (souvent liée à rupture de stérilité)</td></tr>
+      <tr><td><strong>ACR</strong></td><td>Arrêt Cardio-Respiratoire</td></tr>
+      <tr><td><strong>PAF</strong></td><td>Plaie par Arme à Feu</td></tr>
+      <tr><td><strong>PAB</strong></td><td>Plaie par Arme Blanche</td></tr>
+      <tr><td><strong>ATA</strong></td><td>Arrêt Temporaire d'Activité — restriction RP suite à blessure</td></tr>
+      <tr><td><strong>GCS</strong></td><td>Glasgow Coma Scale — score neurologique (max 15 = conscient, ≤8 = coma)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ RAPPORTS IA ═══════════════════════════════════ -->
+<div id="tab-rapports" class="section">
+  <div class="page-title">Rédaction de rapports médicaux</div>
+  <div class="page-sub">Assistant IA — Génère ton rapport SAMC officiel en quelques secondes — Code 3 &amp; Code 6</div>
+
+  <div class="card" style="margin-bottom:10px;border-left:4px solid var(--amber)">
+    <div style="font-size:12px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Clé API Google Gemini requise</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:8px;line-height:1.6">Crée une clé gratuite sur <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com</a> et colle-la ici. Elle est stockée uniquement dans ton navigateur, jamais envoyée ailleurs.</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="f-apikey" type="password" class="form-input" placeholder="AIza..." style="flex:1;font-family:monospace;font-size:12px">
+      <button onclick="saveKey()" style="padding:9px 16px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:var(--font)">Sauvegarder</button>
+    </div>
+    <div id="key-status" style="font-size:12px;margin-top:6px;color:var(--txt3)"></div>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <label style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.05em">Modèle :</label>
+      <select id="f-model" style="font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--txt);font-family:var(--font)">
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash — Quota gratuit généreux ✅</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro — Plus précis (quota limité)</option>
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash — Nécessite facturation activée</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <div style="font-size:13px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Presets rapides</div>
+    <div class="preset-wrap">
+      <button class="preset-btn" onclick="preset('paf')"><span class="preset-label">Code 6 — Terrain</span>Blessure par arme à feu (PAF)</button>
+      <button class="preset-btn" onclick="preset('pab')"><span class="preset-label">Code 6 — Terrain</span>Blessure par arme blanche (PAB)</button>
+      <button class="preset-btn" onclick="preset('acr')"><span class="preset-label">Code 3 — Critique</span>Arrêt cardio-respiratoire (ACR)</button>
+      <button class="preset-btn" onclick="preset('trauma')"><span class="preset-label">Code 3 — Accident</span>Traumatisme / AVP</button>
+      <button class="preset-btn" onclick="preset('bobologie')"><span class="preset-label">Code 6 — Hôpital</span>Soins légers / bobologie</button>
+    </div>
+
+    <div class="form-grid-2" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Type de prise en charge</label>
+        <select id="f-type" class="form-select">
+          <option value="code6">Code 6 — Hôpital / Bloc opératoire</option>
+          <option value="code3">Code 3 — Ambulance / Patrouille terrain</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grade + Nom du rédacteur</label>
+        <input id="f-redacteur" type="text" class="form-input" placeholder="ex : Trainee Leo Vanzetti">
+      </div>
+    </div>
+    <div class="form-grid-3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Nom du patient</label>
+        <input id="f-patient" type="text" class="form-input" placeholder="ex : Rafa Santos">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lieu d'intervention</label>
+        <input id="f-lieu" type="text" class="form-input" placeholder="ex : Elgin Avenue">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chirurgien responsable (si bloc)</label>
+        <input id="f-chirurgien" type="text" class="form-input" placeholder="ex : Dr. James DAHON">
+      </div>
+    </div>
+    <div class="form-grid-3" style="margin-bottom:12px">
+      <div class="form-group">
+        <label class="form-label">Pression artérielle (mmHg)</label>
+        <input id="f-pa" type="text" class="form-input" placeholder="ex : 110/70">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fréquence cardiaque (bpm)</label>
+        <input id="f-fc" type="text" class="form-input" placeholder="ex : 88">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Saturation O₂ (%)</label>
+        <input id="f-spo2" type="text" class="form-input" placeholder="ex : 97">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">État initial &amp; blessures constatées</label>
+      <textarea id="f-blessures" class="form-textarea" rows="3" placeholder="Décris les blessures, le mécanisme, l'état du patient à l'arrivée, la scène..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Actes médicaux réalisés</label>
+      <textarea id="f-actes" class="form-textarea" rows="2" placeholder="ex : RCP réussie, extraction PAF cuisse, prescription antibiotiques, béquilles..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Facturation (actes &amp; montants)</label>
+      <textarea id="f-factures" class="form-textarea" rows="2" placeholder="ex : Réanimation $400, Chirurgie PAF $2000, Prescription $100 — Total : $2500"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Arrêt de travail (ATA) prescrit</label>
+      <input id="f-ata" type="text" class="form-input" placeholder="ex : 8 heures / 24 heures / Aucun">
+    </div>
+
+    <button class="btn-gen" id="btn-gen" onclick="genRapport()">Générer le rapport médical SAMC</button>
+    <div id="output" class="output-area"></div>
+    <button id="btn-copy" class="btn-copy" onclick="copyOutput()">Copier le rapport</button>
+  </div>
+
+  <div class="section-title">Exemple de rapport (référence)</div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--txt3);margin-bottom:10px">Format standard SAMC — à respecter dans tous vos rapports</div>
+    <pre style="font-size:12px;line-height:1.8;color:var(--txt2);overflow-x:auto;white-space:pre-wrap">Rédigée à [Lieu], San Andreas le [Date] à [Heure]
+Rédacteur : [Grade] [Prénom NOM]
+
+Nous, soussignés, le San Andreas Medical Care, attestons...
+
+ADMISSION ET PRISE EN CHARGE :
+[Description de la prise en charge]
+
+OBSERVATION DE TERRAIN :
+Constantes vitales :
+- Pression artérielle : [X/X] mmHg
+- Fréquence cardiaque : [X] bpm
+- Saturation en O₂ : [X] %
+
+DIAGNOSTIC ET OBSERVATION :
+[Description clinique]
+
+VOLET CHIRURGICAL (si applicable) :
+[Compte-rendu post-opératoire]
+
+CONCLUSION :
+[Conclusion + état de sortie]
+
+Actes médicaux :
+[Tableau de facturation]
+Total : $ [Montant]
+
+[Signature]</pre>
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">
+  SAMC Assistant — FlashFA · Ressource officieuse pour les membres de la San Andreas Medical Company · Non affilié à Rockstar Games
+</div>
+
+<script>
+function saveKey() {
+  var key = document.getElementById('f-apikey') ? document.getElementById('f-apikey').value.trim() : '';
+  if (!key.startsWith('AIza')) {
+    if(document.getElementById('key-status')) { document.getElementById('key-status').style.color = 'var(--red)'; document.getElementById('key-status').textContent = 'Format invalide. La clé Google doit commencer par AIza'; }
+    return;
+  }
+  localStorage.setItem('samc_gemini_key', key);
+  if(document.getElementById('key-status')) { document.getElementById('key-status').style.color = 'var(--green)'; document.getElementById('key-status').textContent = 'Clé sauvegardée.'; }
+}
+
+function modalSave() {
+  var key = document.getElementById('modal-key-input').value.trim();
+  if (!key.startsWith('AIza')) {
+    document.getElementById('modal-err').textContent = 'Format invalide — la clé doit commencer par AIza';
+    return;
+  }
+  localStorage.setItem('samc_gemini_key', key);
+  if(document.getElementById('f-apikey')) document.getElementById('f-apikey').value = key;
+  if(document.getElementById('key-status')) { document.getElementById('key-status').style.color = 'var(--green)'; document.getElementById('key-status').textContent = 'Clé active.'; }
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+function modalSkip() {
+  localStorage.setItem('samc_modal_skipped', '1');
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+function loadKey() {
+  var saved = localStorage.getItem('samc_gemini_key');
+  if (saved) {
+    if(document.getElementById('f-apikey')) document.getElementById('f-apikey').value = saved;
+    if(document.getElementById('key-status')) { document.getElementById('key-status').style.color = 'var(--green)'; document.getElementById('key-status').textContent = 'Clé active — IA prête.'; }
+  } else {
+    var skipped = localStorage.getItem('samc_modal_skipped');
+    if (!skipped) document.getElementById('modal-overlay').style.display = 'flex';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadKey);
+
+function go(tab, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function toggle(head) {
+  var body = head.nextElementSibling;
+  var ch = head.querySelector('.acc-chevron');
+  body.classList.toggle('open');
+  ch.classList.toggle('open');
+}
+
+var PRESETS = {
+  paf: {
+    type: 'code6',
+    pa: '110/70', fc: '88', spo2: '97',
+    blessures: 'Patient retrouvé inconscient à l\'accueil de l\'établissement. Arrêt respiratoire constaté à l\'arrivée. Traumatismes : plaies par arme à feu au niveau de la cuisse droite et de la main droite. Deux impacts de balles, projectiles logés dans les tissus mous sans atteinte osseuse ou vasculaire majeure.',
+    actes: 'Réanimation cardio-pulmonaire réussie. Extraction chirurgicale des deux projectiles (cuisse et main droites). Parage et désinfection des orifices. Sutures musculaires et cutanées. Pansements compressifs stériles. Prescription antibiotiques et antalgiques.',
+    factures: 'Réanimation $400, Intervention chirurgicale PAF $2000, Prescription médicament $100 — Total : $2500',
+    ata: '8 heures'
+  },
+  pab: {
+    type: 'code6',
+    pa: '94/60', fc: '108', spo2: '93',
+    blessures: 'Patient admis sur décision d\'un équipage médical suite à une agression par arme blanche avec atteinte abdominale. Plaie pénétrante abdominale avec saignement actif. Défense abdominale localisée, douleur sévère à la palpation. Signes de début de choc hémorragique.',
+    actes: 'Stabilisation hémodynamique préalable. Exploration chirurgicale : plaie pénétrante limitée à la paroi abdominale, absence d\'atteinte viscérale. Débridement limité. Lavage abondant. Fermeture plan musculaire et cutané. Pansement compressif stérile. Prescription antalgiques. Béquilles.',
+    factures: 'Réanimation $400, Chirurgie PAB sévère $1750, Prescription médicament $100, Béquilles $300 — Total : $2550',
+    ata: '24 heures'
+  },
+  acr: {
+    type: 'code3',
+    pa: '80/50', fc: '0', spo2: '88',
+    blessures: 'Arrêt cardio-respiratoire constaté à l\'arrivée de l\'équipage. Patient inconscient, en apnée, absence de pouls carotidien. Situation retrouvée sur la voie publique.',
+    actes: 'RCP immédiate 30:2. Défibrillation après identification fibrillation ventriculaire. Retour à une activité circulatoire spontanée après 3 cycles. Monitoring continu. Stabilisation et évacuation médicalisée urgente vers PillBox Hill Medical Center.',
+    factures: 'Réanimation $400',
+    ata: 'Non applicable'
+  },
+  trauma: {
+    type: 'code3',
+    pa: '105/65', fc: '112', spo2: '95',
+    blessures: 'Traumatisme multiple suite à un accident de la voie publique (AVP). Fracture probable du membre inférieur gauche. Douleur thoracique. Lacérations multiples. Patient conscient mais confus.',
+    actes: 'Immobilisation du membre inférieur. Pansements compressifs sur lacérations. Monitoring continu. Évacuation vers PillBox Hill Medical Center.',
+    factures: 'Soins de base $200, Prescription antalgiques $100 — Total : $300',
+    ata: '45 minutes'
+  },
+  bobologie: {
+    type: 'code6',
+    pa: '120/80', fc: '72', spo2: '99',
+    blessures: 'Patient se présentant aux urgences pour une plaie superficielle au niveau du bras gauche. Mécanisme : chute accidentelle. Aucun signe de détresse vitale.',
+    actes: 'Nettoyage et désinfection de la plaie. Suture par points séparés. Pansement stérile. Prescription antalgiques légers.',
+    factures: 'Soins de base $200, Prescription médicament $100 — Total : $300',
+    ata: 'Aucun'
+  }
+};
+
+function preset(key) {
+  var p = PRESETS[key];
+  document.getElementById('f-type').value = p.type;
+  document.getElementById('f-pa').value = p.pa;
+  document.getElementById('f-fc').value = p.fc;
+  document.getElementById('f-spo2').value = p.spo2;
+  document.getElementById('f-blessures').value = p.blessures;
+  document.getElementById('f-actes').value = p.actes;
+  document.getElementById('f-factures').value = p.factures;
+  document.getElementById('f-ata').value = p.ata;
+}
+
+async function genRapport() {
+  var btn = document.getElementById('btn-gen');
+  var out = document.getElementById('output');
+  var copyBtn = document.getElementById('btn-copy');
+
+  var type = document.getElementById('f-type').value;
+  var redacteur = document.getElementById('f-redacteur').value || 'Agent SAMC';
+  var patient = document.getElementById('f-patient').value || 'Patient Inconnu';
+  var lieu = document.getElementById('f-lieu').value || 'San Andreas';
+  var chirurgien = document.getElementById('f-chirurgien').value || '';
+  var pa = document.getElementById('f-pa').value || 'non renseignée';
+  var fc = document.getElementById('f-fc').value || 'non renseignée';
+  var spo2 = document.getElementById('f-spo2').value || 'non renseignée';
+  var blessures = document.getElementById('f-blessures').value || '';
+  var actes = document.getElementById('f-actes').value || '';
+  var factures = document.getElementById('f-factures').value || '';
+  var ata = document.getElementById('f-ata').value || 'Aucun';
+
+  var now = new Date();
+  var date = now.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
+  var heure = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  var typeLabel = type === 'code6' ? 'Code 6 — Hôpital / Bloc opératoire' : 'Code 3 — Intervention ambulance terrain';
+
+  btn.disabled = true;
+  btn.textContent = 'Génération en cours…';
+  out.className = 'output-area show';
+  out.textContent = 'Rédaction du rapport…';
+  copyBtn.className = 'btn-copy';
+
+  var systemPrompt = `Tu es le système de rédaction officiel de la San Andreas Medical Company (SAMC) sur le serveur GTA RP FlashFA. Tu rédiges exclusivement des rapports médicaux professionnels en français, dans un style médical formel, réaliste et détaillé, adapté au jeu de rôle médical immersif.
+
+Structure OBLIGATOIRE du rapport :
+1. En-tête : "Rédigée à [Lieu], San Andreas le [Date] à [Heure] — Rédacteur : [Grade Prénom NOM]"
+2. Formule d'attestation SAMC complète
+3. ADMISSION ET PRISE EN CHARGE DE TERRAIN ou HOSPITALIÈRE selon le contexte
+4. Premier contact et constats cliniques initiaux
+5. OBSERVATION DE TERRAIN : constantes vitales observées ET constantes normales en comparaison
+6. DIAGNOSTIC ET OBSERVATION approfondie
+7. VOLET CHIRURGICAL si applicable (compte-rendu post-opératoire structuré en étapes numérotées : préparation, anesthésie, exploration, constat per-opératoire, gestes réalisés, fin d'intervention, praticien responsable)
+8. CONCLUSION concise avec état de sortie
+9. Actes médicaux avec montants en tableau
+10. Signature du rédacteur
+11. ATA prescrit si applicable
+
+Style : formel, médical, détaillé mais sans superflu. Ne jamais inventer d'éléments non fournis. Adapter la longueur à la gravité (rapport léger = 15 lignes, rapport chirurgical = 40+ lignes).`;
+
+  var userPrompt = `Génère un rapport SAMC complet pour :
+
+Type : ${typeLabel}
+Date : ${date} à ${heure}
+Lieu : ${lieu}
+Rédacteur : ${redacteur}
+Patient : ${patient}
+${chirurgien ? 'Chirurgien : Dr. ' + chirurgien : ''}
+
+Constantes observées :
+- PA : ${pa} mmHg
+- FC : ${fc} bpm
+- SpO₂ : ${spo2} %
+
+État clinique et blessures : ${blessures}
+
+Actes réalisés : ${actes}
+
+Facturation : ${factures}
+
+ATA prescrit : ${ata}`;
+
+  var apiKey = localStorage.getItem('samc_gemini_key') || document.getElementById('f-apikey').value.trim();
+  if (!apiKey || !apiKey.startsWith('AIza')) {
+    out.textContent = 'Clé API Gemini manquante. Colle ta clé AIza... dans le champ en haut, puis clique Sauvegarder.';
+    btn.disabled = false;
+    btn.textContent = 'Générer le rapport médical SAMC';
+    return;
+  }
+
+  var selectedModel = document.getElementById('f-model') ? document.getElementById('f-model').value : 'gemini-1.5-flash';
+  var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + selectedModel + ':generateContent?key=' + apiKey;
+  var geminiPayload = JSON.stringify({
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    generationConfig: { maxOutputTokens: 1500, temperature: 0.4 }
+  });
+
+  var ok = false;
+
+  try {
+    var res = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: geminiPayload
+    });
+    if (res.ok) {
+      var data = await res.json();
+      var txt = '';
+      try { txt = data.candidates[0].content.parts[0].text; } catch(e2) {}
+      if (txt) { out.textContent = txt; copyBtn.className = 'btn-copy show'; ok = true; }
+      else { out.textContent = 'Erreur : reponse vide de Gemini. Reessaie.'; ok = true; }
+    } else {
+      var errData = await res.json().catch(function(){return {};});
+      var errMsg = (errData.error && errData.error.message) ? errData.error.message : 'HTTP ' + res.status;
+      if (res.status === 400) errMsg = 'Requete invalide — verifie ta cle API Gemini';
+      if (res.status === 403) errMsg = 'Acces refuse — active l API Gemini sur aistudio.google.com';
+      out.textContent = 'Erreur Gemini : ' + errMsg;
+      ok = true;
+    }
+  } catch(e1) {
+    // reseau coupe ou CORS
+  }
+
+  if (!ok) {
+    var lignes = [];
+    lignes.push('Redigee a ' + lieu + ', San Andreas le ' + date + ' a ' + heure);
+    lignes.push('Redacteur : ' + redacteur);
+    lignes.push('');
+    lignes.push('Nous, soussignes, le San Andreas Medical Care, attestons par la presente que le patient susmentione a ete pris en charge par notre etablissement a la date en tete de document. Cette prise en charge a ete rendue necessaire en raison d un etat de sante juge preoccupant, tel que documente dans le present rapport.');
+    lignes.push('');
+    lignes.push(type === 'code3' ? 'ADMISSION ET PRISE EN CHARGE DE TERRAIN :' : 'ADMISSION ET PRISE EN CHARGE HOSPITALIERE :');
+    lignes.push(blessures || 'Le patient a ete pris en charge par l equipe SAMC.');
+    lignes.push('');
+    lignes.push('Le patient indique ne presenter aucune allergie medicamenteuse connue ni contre-indication.');
+    lignes.push('');
+    lignes.push('OBSERVATION :');
+    lignes.push('Constantes vitales :');
+    lignes.push('  - Pression arterielle : ' + pa + ' mmHg');
+    lignes.push('  - Frequence cardiaque : ' + fc + ' bpm');
+    lignes.push('  - Saturation en O2 : ' + spo2 + ' %');
+    lignes.push('');
+    lignes.push('Constantes normales de reference :');
+    lignes.push('  - Pression arterielle : 120/80 mmHg');
+    lignes.push('  - Frequence cardiaque : 72 bpm');
+    lignes.push('  - Saturation en O2 : 98 %');
+    lignes.push('');
+    if (actes) {
+      lignes.push('DIAGNOSTIC ET TRAITEMENT :');
+      lignes.push(actes);
+      lignes.push('');
+    }
+    if (chirurgien) {
+      lignes.push('Praticien(s) responsable(s) : Dr. ' + chirurgien);
+      lignes.push('');
+    }
+    lignes.push('CONCLUSION :');
+    lignes.push('Le patient quitte l etablissement dans un etat stable, compatible avec un retour a domicile. Dument avise des conduites a tenir en cas de complication.');
+    lignes.push('');
+    lignes.push('Actes medicaux :');
+    lignes.push(factures || 'A completer.');
+    if (ata && ata !== 'Aucun' && ata !== 'Non applicable') {
+      lignes.push('');
+      lignes.push('Arret de travail (ATA) : ' + ata);
+    }
+    lignes.push('');
+    lignes.push(redacteur);
+    lignes.push('');
+    lignes.push('--- Mode hors-ligne : API CORS bloquee par le navigateur ---');
+    lignes.push('Pour la version IA, heberge le site sur GitHub Pages ou ouvre-le depuis un serveur local.');
+    out.textContent = lignes.join('\n');
+    copyBtn.className = 'btn-copy show';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generer le rapport medical SAMC';
+}
+
+function copyOutput() {
+  var text = document.getElementById('output').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var b = document.getElementById('btn-copy');
+    b.textContent = 'Copié !';
+    setTimeout(function(){ b.textContent = 'Copier le rapport'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
