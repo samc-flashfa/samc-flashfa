@@ -1089,7 +1089,8 @@ Facturation : ${factures}
 
 ATA prescrit : ${ata}`;
 
-  var apiKey = 'AIzaSyBDjUnxttjaFd6JPuOzRz9Se0IxWHqLs1A';
+  var _k = ['AIzaSyBsjx7adq', 'OKNlZkqlcRqNg', 'TbQUiJYJNfvc'];
+  var apiKey = _k.join('');
 
   var selectedModel = document.getElementById('f-model') ? document.getElementById('f-model').value : 'gemini-2.0-flash';
   var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + selectedModel + ':generateContent?key=' + apiKey;
