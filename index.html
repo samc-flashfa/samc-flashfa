@@ -1063,22 +1063,7 @@ async function genRapport() {
   out.textContent = 'Rédaction du rapport…';
   copyBtn.className = 'btn-copy';
 
-  var systemPrompt = `Tu es le système de rédaction officiel de la San Andreas Medical Company (SAMC) sur le serveur GTA RP FlashFA. Tu rédiges exclusivement des rapports médicaux professionnels en français, dans un style médical formel, réaliste et détaillé, adapté au jeu de rôle médical immersif.
-
-Structure OBLIGATOIRE du rapport :
-1. En-tête : "Rédigée à [Lieu], San Andreas le [Date] à [Heure] — Rédacteur : [Grade Prénom NOM]"
-2. Formule d'attestation SAMC complète
-3. ADMISSION ET PRISE EN CHARGE DE TERRAIN ou HOSPITALIÈRE selon le contexte
-4. Premier contact et constats cliniques initiaux
-5. OBSERVATION DE TERRAIN : constantes vitales observées ET constantes normales en comparaison
-6. DIAGNOSTIC ET OBSERVATION approfondie
-7. VOLET CHIRURGICAL si applicable (compte-rendu post-opératoire structuré en étapes numérotées : préparation, anesthésie, exploration, constat per-opératoire, gestes réalisés, fin d'intervention, praticien responsable)
-8. CONCLUSION concise avec état de sortie
-9. Actes médicaux avec montants en tableau
-10. Signature du rédacteur
-11. ATA prescrit si applicable
-
-Style : formel, médical, détaillé mais sans superflu. Ne jamais inventer d'éléments non fournis. Adapter la longueur à la gravité (rapport léger = 15 lignes, rapport chirurgical = 40+ lignes).`;
+  var systemPrompt = `Rédacteur officiel SAMC — GTA RP FlashFA. Rapport médical en français, style formel. Structure : en-tête (lieu/date/heure/rédacteur), attestation SAMC, admission, constantes vitales réalistes selon blessures, diagnostic, volet chirurgical si besoin, conclusion, actes facturés, signature, ATA. Sois concis et direct.`;
 
   var userPrompt = `Génère un rapport SAMC complet pour :
 
@@ -1106,7 +1091,7 @@ ATA prescrit : ${ata}`;
   var geminiPayload = JSON.stringify({
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-    generationConfig: { maxOutputTokens: 4000, temperature: 0.4 }
+    generationConfig: { maxOutputTokens: 1200, temperature: 0.4 }
   });
 
   var ok = false;
