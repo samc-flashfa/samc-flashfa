@@ -48,7 +48,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:10
 .nav-brand img{width:36px;height:36px;object-fit:contain;border-radius:6px}
 .nav-brand-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
 .nav-brand-sub{color:rgba(255,255,255,.45);font-size:11px}
-.nav-tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav-tabs{display:flex;overflow:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{padding:14px 14px;font-size:13px;color:rgba(255,255,255,.6);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-3px;white-space:nowrap;transition:color .15s,border-color .15s;font-family:var(--font);font-weight:500}
 .nav-tab:hover{color:rgba(255,255,255,.9)}
@@ -284,13 +284,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:10
 .status-bar{background:var(--navy2);padding:6px 1.25rem;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.45)}
 .nav-separator{width:1px;background:rgba(255,255,255,.15);margin:8px 6px;align-self:stretch;flex-shrink:0}
   .nav-category{font-size:9px;font-weight:800;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.12em;padding:0 10px;white-space:nowrap;align-self:center;flex-shrink:0}
+  .dd-checkbox{display:none}
   .nav-dropdown{position:relative}
-  .nav-dropdown-trigger{display:flex;align-items:center;gap:4px}
-  .nav-dropdown-menu{display:none;position:absolute;top:calc(100% + 3px);left:0;background:var(--navy2);border:1px solid rgba(255,255,255,.1);border-radius:10px;min-width:200px;padding:6px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-  .nav-dropdown.open .nav-dropdown-menu{display:block}
-  @media(min-width:960px){
-    .nav-dropdown:hover .nav-dropdown-menu{display:block}
-  }
+  .nav-dropdown-trigger{display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none}
+  .nav-dropdown-menu{display:none;position:fixed;top:48px;background:#1a2a3a;border:1px solid rgba(255,255,255,.2);border-radius:10px;min-width:210px;padding:6px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+  .dd-checkbox:checked ~ .nav-dropdown-menu{display:block}
+  @media(min-width:960px){.nav-dropdown:hover .nav-dropdown-menu{display:block}}
   .nav-dropdown-label{font-size:10px;font-weight:800;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;padding:6px 10px 4px}
   .nav-dropdown-item{display:block;width:100%;background:none;border:none;padding:9px 12px;font-size:13px;color:rgba(255,255,255,.8);cursor:pointer;text-align:left;font-family:var(--font);border-radius:7px;transition:background .1s,color .1s}
   .nav-dropdown-item:hover{background:rgba(255,255,255,.1);color:#fff}
@@ -328,7 +327,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:10
     <div class="nav-tabs" id="nav-tabs-desktop">
       <button class="nav-tab active" onclick="go('accueil',this)">Accueil</button>
       <div class="nav-dropdown">
-        <button class="nav-tab nav-dropdown-trigger" onclick="toggleDropdown(event,this)">🔴 Intervention ▾</button>
+        <label class="nav-tab nav-dropdown-trigger" for="dd-intervention">🔴 Intervention ▾</label><input type="checkbox" id="dd-intervention" class="dd-checkbox">
         <div class="nav-dropdown-menu">
           <div class="nav-dropdown-label">Intervention</div>
           <button class="nav-dropdown-item" onclick="go('rapports',null);closeDropdowns()">📝 Rapports IA</button>
@@ -338,7 +337,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:10
         </div>
       </div>
       <div class="nav-dropdown">
-        <button class="nav-tab nav-dropdown-trigger" onclick="toggleDropdown(event,this)">🔵 Référence ▾</button>
+        <label class="nav-tab nav-dropdown-trigger" for="dd-reference">🔵 Référence ▾</label><input type="checkbox" id="dd-reference" class="dd-checkbox">
         <div class="nav-dropdown-menu">
           <div class="nav-dropdown-label">Référence médicale</div>
           <button class="nav-dropdown-item" onclick="go('protocoles',null);closeDropdowns()">🚑 Protocoles terrain</button>
@@ -1233,20 +1232,8 @@ function toggle(head) {
 }
 
 function closeDropdowns() {
-  document.querySelectorAll('.nav-dropdown').forEach(function(d){ d.classList.remove('open'); });
+  document.querySelectorAll('.dd-checkbox').forEach(function(cb){ cb.checked = false; });
 }
-
-function toggleDropdown(e, el) {
-  e.stopPropagation();
-  var dd = el.parentElement;
-  var wasOpen = dd.classList.contains('open');
-  closeDropdowns();
-  if (!wasOpen) dd.classList.add('open');
-}
-
-document.addEventListener('click', function() {
-  closeDropdowns();
-});
 
 function toggleBurger() {
   document.getElementById('burger-menu').classList.toggle('open');
